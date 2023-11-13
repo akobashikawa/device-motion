@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Device Motion</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+    crossorigin="anonymous">
+  <style>
+  .xyz-acceleration-component,
+  .xyz-acceleration-g-component,
+  .xyz-rotation-component
+   {
+    position: relative;
+    height: 150px;
+  }
+  .xyz-container {
+    position: absolute;
+    top:0; left:0; right: 0;bottom:0;
+    margin: auto;
+    width: 100px;
+    height: 100px;
+    perspective-origin: 150px -50px;
+    perspective: 200px;
+  }
+  .plane {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100px;
+    width: 100px;
+  }
+  .plane:before {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 100px;
+    top: 0;
+    left: 50px;
+    background-color: rgba(255,255,255,0.5);
+  }
+  .x {
+    background-color: rgba(0,0,255,0.5);
+    transform: rotateX(90deg);
+  }
+  .y {
+    background-color: rgba(255,0,0,0.5);
+    transform: rotateY(90deg);
+  }
+  .z {
+    background-color: rgba(0,255,0,0.5);
+    transform: rotateZ(90deg);
+  }
+  .ball {
+    background-color: #f00;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: absolute;
+    top: 45px;
+    left: 45px;
+  }
+
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container d-flex justify-content-between">
+          <a href="./" class="navbar-brand d-flex align-items-center">
+            <strong>Hello Android</strong>
+          </a>
+        </div>
+      </div>
+    </header>
+    <main v-show="deviceready">
+      <div class="container-fluid mt-2">
+        <form class="form">
+          <button class="btn btn-primary" @click="showTime">Show Time</button>
+          <button class="btn btn-primary" @click="vibrate">Vibrate</button>
+        </form>
+        <div v-if="needsCompassCalibration">
+          needsCompassCalibration
+        </div>
+        <div v-if="acceleration">
+          <h6>acceleration</h6>
+          <xyz-acceleration
+            :value-x="acceleration.x"
+            :value-y="acceleration.y"
+            :value-z="acceleration.z"
+          ></xyz-acceleration>
+        </div>
+        <div v-if="accelerationIncludingGravity">
+          <h6>accelerationIncludingGravity</h6>
+          <xyz-acceleration-g :value-x="accelerationIncludingGravity.x" :value-y="accelerationIncludingGravity.y" :value-z="accelerationIncludingGravity.z"
+          ></xyz-acceleration-g>
+        </div>
+        <div v-if="rotationRate">
+          <h6>rotationRate</h6>
+          <xyz-rotation :value-alpha="rotationRate.alpha" 
+          :value-beta="rotationRate.beta"
+          :value-gamma="rotationRate.gamma"
+          >
+          </xyz-rotation>
+        </div>
+      </div>
+  
+    </main>
+    <footer>
+      <div class="container">
+        <small>@rulokoba - 20181007</small>
+      </div>
+    </footer>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+  <script>
+  Vue.component('minmax', {
+    data: function() {
+      return {
+      };
+    },
+    props: ['min', 'max', 'value', 'step'],
+    computed: {
+    },
+    mounted: function() {
+    },
+    template: `<div class="minmax-component form">
+      <input type="range" class="form-control-range" :min="min" :max="max" :step="step" :value="value">
+    </div>`
+  });
+
+  Vue.component('xyzAcceleration', {
+    data: function() {
+      return {
+      };
+    },
+    props: ['valueX', 'valueY', 'valueZ'],
+    computed: {
+      style: function() {
+        const f = 5;
+        const ax = Math.floor(f * this.valueX);
+        const ay = Math.floor(f * this.valueY);
+        const az = Math.floor(f * this.valueZ);
+return `transform: translate3d(${ax}px, ${ay}px, ${az}px)`;
+      }
+    },
+    mounted: function() {
+    },
+    template: `<div class="xyz-acceleration-component">
+      <div class="xyz-container">
+        <div class="plane x"></div>
+        <div class="plane y"></div>
+        <div class="plane z"></div>
+        <div class="ball" :style="style"></div>
+      </div>
+    </div>`
+  });
+
+  Vue.component('xyzAccelerationG', {
+    data: function() {
+      return {
+      };
+    },
+    props: ['valueX', 'valueY', 'valueZ'],
+    computed: {
+      style: function() {
+        const f = 5;
+        const ax = Math.floor(f * this.valueX);
+        const ay = Math.floor(f * this.valueY);
+        const az = Math.floor(f * this.valueZ);
+return `transform: translate3d(${ax}px, ${ay}px, ${az}px)`;
+      }
+    },
+    mounted: function() {
+    },
+    template: `<div class="xyz-acceleration-g-component">
+      <div class="xyz-container">
+        <div class="plane x"></div>
+        <div class="plane y"></div>
+        <div class="plane z"></div>
+        <div class="ball" :style="style"></div>
+      </div>
+    </div>`
+  });
+
+  Vue.component('xyzRotation', {
+    data: function() {
+      return {
+      };
+    },
+    props: ['valueAlpha', 'valueBeta', 'valueGamma'],
+    computed: {
+      styleX: function() {
+        const ralpha = 90 + this.valueAlpha;
+        const rbeta = this.valueBeta;
+        const rgamma = this.valueGamma;
+        return `transform: rotate3d(1,0,0, ${ralpha}deg)`;
+      },
+      styleY: function() {
+        const ralpha = 90 + this.valueAlpha;
+        const rbeta = 90 + this.valueBeta;
+        const rgamma = this.valueGamma;
+        return `transform: rotate3d(0,1,0, ${rbeta}deg)`;
+      },
+      styleZ: function() {
+        const ralpha = 90 + this.valueAlpha;
+        const rbeta = this.valueBeta;
+        const rgamma = 90 + this.valueGamma;
+        return `transform: rotate3d(0,0,1, ${rgamma}deg)`;
+      }
+    },
+    mounted: function() {
+    },
+    template: `<div class="xyz-rotation-component">
+      <div class="xyz-container">
+        <div class="plane x" :style="styleX"></div>
+        <div class="plane y" :style="styleY"></div>
+        <div class="plane z" :style="styleZ"></div>
+      </div>
+    </div>`
+  });
+
+  const app = new Vue({
+      el: '#app',
+      data: {
+        deviceready: false,
+        acceleration: null,
+        accelerationIncludingGravity: null,
+        rotationRate: null,
+        needsCompassCalibration: false
+      },
+      mounted: function() {
+        this.init();
+      },
+      methods: {
+        init: function () {
+          this.deviceready = true;
+        },
+        showTime: function () {
+          const now = new Date();
+          const nn = (n) => (n < 10) ? ('0' + n) : n;
+          const time = `${now.getFullYear()}/${nn(now.getMonth())}/${nn(now.getDay())}-${nn(now.getHours())}:${nn(now.getMinutes())}:${nn(now.getSeconds())}`;
+          alert(time);
+        },
+        vibrate: function () {
+          alert('vibrate');
+        },
+        compassCalibration: function (event) {
+          this.needsCompassCalibration = true;
+          event.preventDefault();
+        },
+        deviceMotion: function (event) {
+          this.acceleration = event.acceleration;
+          this.accelerationIncludingGravity = event.accelerationIncludingGravity;
+          this.rotationRate = event.rotationRate;
+        }
+      }
+    });
+
+    window.addEventListener('compassneedscalibration', app.compassCalibration, true);
+    window.addEventListener("devicemotion", app.deviceMotion, true);
+  </script>
+</body>
+</html>
